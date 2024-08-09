@@ -1,12 +1,12 @@
-enum Status {
+export enum Status {
     Draft,
     Open,
-    Inprogress
-    Complete
-    Rejected
+    Inprogress,
+    Complete,
+    Cancelled
 }
 
-enum Priority {
+export enum Priority {
     Low,
     Normal,
     Critical
@@ -18,4 +18,5 @@ export interface Todo {
     description: string;
     status: Status;
     priority: Priority;
+    ts: number;
 }
