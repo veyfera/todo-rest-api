@@ -1,25 +1,46 @@
 import { Request, Response } from 'express';
+import { Todo } from './types';
+
+//const todos: Array<Todo> = [];
+const todos: Todo[] = [];
+let todoCnt = 0;
 
 export const getTodos = (req: Request, res: Response) => {
-    const requ = req;
-    console.log(requ);
-    res.status(200).json([1, 2, 3]);
+    const { filter } = req.params;
+    if(filter) {
+        console.log("filtering todos by: ", filter);
+    }
+    res.status(200).json(todos);
 }
 
 export const getTodo = (req: Request, res: Response) => {
     const { id  } = req.params;
-    res.status(200).json({'title': 1, 'desc': 2, 'id': id});
+    const todo = todos.find(t => t.id === id);
+    if (todo) {
+        res.status(200).json(todo);
+    } else {
+        res.status(404).json({msg: "no todo with id " + id});
+    }
 }
 
 export const createTodo = (req: Request, res: Response) => {
-    const { todo } = req.params;
-    console.log(todo);
-    res.status(404);
+    //typechecking is happening
+    const { title, description, status, priority } = req.body;
+    if(title && description && status && priority) {
+        const todo = {id: todoCnt, title: title, description: description, status: status, priority: priority};
+        todoCnt+=1;
+        todos.push(todo);
+        res.status(200).json({msg:"succesfully added new todo", id: todoCnt-1});
+    } else {
+        res.status(400).json({msg: "Invalid body, one or more properties missing: title, description, status, priority"});
+    }
 }
 
 export const updateTodo = (req: Request, res: Response) => {
-    const { id  } = req.params;
-    console.log(id);
+    const { id, todo } = req.params;
+    if(id && todo) {
+        console.log(id, todo);
+    }
     res.status(404);
 }
 
