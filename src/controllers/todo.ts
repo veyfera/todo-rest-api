@@ -5,13 +5,11 @@ const TODO_PER_PAGE = 20;
 const TODO_TITLE_LEN = 70;
 const TODO_DESC_LEN = 5000;
 
-//const todos: Array<Todo> = [];
-const todos: Todo[] = [];
+const todos: Array<Todo> = [];
 let todoCnt = 0;
 
 export const getTodos = (req: Request, res: Response) => {
-    //const { filter, page = 1 } = req.params;
-    const { filter, page = 1, status, priority, date } = req.query;
+    const { filter, page = 1, status, priority, date, sort } = req.query;
     let searchRes:Array<Todo> = todos;
     console.log("filtering todos by: ", filter);
     switch(filter) {
@@ -19,18 +17,20 @@ export const getTodos = (req: Request, res: Response) => {
             searchRes = todos.filter(t => t.status === +status);
             break;
         case "priority":
-            searchRes = todo.filter(t => t.priority === +priority)
+            searchRes = todos.filter(t => t.priority === +priority)
             break;
         case "date":
-            searchRes = todo.filter(t => t.ts < date);
+            searchRes = todos.filter(t => t.ts <= +date);
             break;
     }
-        //sort by ts
-    if(page > (TODO_PER_PAGE-1)*searchRes.length+1) {
-        res.status(404).json({msg: "no such page"});
-        return
+    if(+page > (TODO_PER_PAGE-1)*searchRes.length+1) {
+        res.status(404).json({msg: "No page with number " + page});
+        return;
     }
-    res.status(200).json(searchRes.slice(page-1, page*TODO_PER_PAGE));
+    if(sort === 'desc') {
+        searchRes.reverse();
+    }
+    res.status(200).json(searchRes.slice(+page-1, +page*TODO_PER_PAGE));
 }
 
 export const getTodo = (req: Request, res: Response) => {
@@ -39,7 +39,7 @@ export const getTodo = (req: Request, res: Response) => {
     if (todo) {
         res.status(200).json(todo);
     } else {
-        res.status(404).json({msg: "no todo with id " + id});
+        res.status(404).json({msg: "No todo with id " + id});
     }
 }
 
@@ -54,12 +54,12 @@ export const createTodo = (req: Request, res: Response) => {
             priority: priority,
             ts: Date.now()
         };
-        //todo = validateTodo(todo);
         const { valid, msg } = validateTodo(todo);
+
         if(valid) {
             todoCnt+=1;
             todos.push(todo);
-            res.status(200).json({msg:"succesfully added new todo", id: todoCnt-1});
+            res.status(200).json({msg:"Succesfully added new todo", id: todoCnt-1});
         } else {
             res.status(400).json({msg: msg});
         }
@@ -73,7 +73,7 @@ export const updateTodo = (req: Request, res: Response) => {
     const { title, description, status, priority} = req.body;
 
     if(!id || !req.body) {
-        res.status(404).json({msg: "Please provide id and _ for updating a todo"});
+        res.status(404).json({msg: "Please provide id and properties for updating a todo"});
         return;
     }
 
@@ -99,6 +99,8 @@ export const updateTodo = (req: Request, res: Response) => {
             todo.description = description || todo.description;
             todo.status = status || todo.status;
             todo.priority = priority || todo.priority;
+        } else {
+            res.status(400).json({msg: msg});
         }
         res.status(200).json({msg: "Succesfully updated todo with id " + id});
     } else {
@@ -119,7 +121,6 @@ export const deleteTodo = (req: Request, res: Response) => {
 }
 
 const validateTodo = (todo: Todo) => {
-    //todo.title = todo.title.replace(/[^A-z 0-9.,?!-'"ЁёА-я]/g, "").slice(0, TODO_TITLE_LEN);
     if (todo.title.length > TODO_TITLE_LEN) {
         return {valid: false, msg: `Todo title should not be longer than ${TODO_TITLE_LEN}`};
     }
@@ -127,20 +128,22 @@ const validateTodo = (todo: Todo) => {
         return {valid: false, msg: "Todo title should only contain latin, cyrilic, numeric and .,?!-\"' symbols"};
     }
 
-    //todo.description = todo.description.slice(0, TODO_DESC_LEN);
     if (todo.description.length > TODO_DESC_LEN) {
         return {valid: false, msg: `Todo description should not be longer than ${TODO_DESC_LEN}`};
     }
 
-    //todo.status = Object.values(Status).includes(todo.status) ? todo.status : Status.Draft;
     if(!Object.values(Status).includes(todo.status)) {
         return {valid: false, msg: "Todo status should be one of "};
     }
 
-    //todo.priority = Object.values(Priority).includes(todo.priority) ? todo.priority : Priority.Low;
     if(!Object.values(Priority).includes(todo.priority)) {
         return {valid: false, msg: "Todo priority should be one of "};
     }
-    //return todo;
     return {valid: true};
+    //alternative logic, if we want to silently and automatically correct the errors
+    //todo.title = todo.title.replace(/[^A-z 0-9.,?!-'"ЁёА-я]/g, "").slice(0, TODO_TITLE_LEN);
+    //todo.description = todo.description.slice(0, TODO_DESC_LEN);
+    //todo.status = Object.values(Status).includes(todo.status) ? todo.status : Status.Draft;
+    //todo.priority = Object.values(Priority).includes(todo.priority) ? todo.priority : Priority.Low;
+    //return todo;
 }

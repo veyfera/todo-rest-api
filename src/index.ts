@@ -1,4 +1,3 @@
-//import express, { Request, Response } from 'express';
 import express from 'express';
 
 import todoRouter from './routes/todo.js';
@@ -6,8 +5,6 @@ const app = express()
 const port = 3000
 
 app.use(express.json());
-
-//const todo = [];
 
 app.use('/', todoRouter);
 
