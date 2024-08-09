@@ -45,8 +45,13 @@ export const updateTodo = (req: Request, res: Response) => {
 }
 
 export const deleteTodo = (req: Request, res: Response) => {
-    const { id  } = req.params;
-    console.log(id);
-    res.status(404);
+    const { id } = req.params;
+    const todo = todos.find(t => t.id == id);
+    if(todo) {
+        todos.splice(todos.indexOf(todo), 1);
+        res.status(200).json({msg: "Succesfully deleted todo with id " + id})
+    } else {
+        res.status(404).json({msg: "No todo with id " + id});
+    }
 }
 
